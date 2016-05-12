@@ -28,6 +28,8 @@ public class jollatoics {
 			System.out.println(dbLocation + " does not seem to exist or is a directory!");
 			System.exit(1);
 		}
+		
+		
 
 		Connection db = SQLiteJDBC.open(dbLocation);
 		Statement stmt = null;
@@ -47,10 +49,14 @@ public class jollatoics {
 			
 			while (rs.next()) {
 				CalendarEntry cE= new CalendarEntry(
-						rs.getString("Summary"), 
-						rs.getInt("DateStart"),
+						rs.getString("Summary"),
+						// TODO do we need the local or non local column? ics4j should calculate it ,,
+						rs.getInt("DateStart"), 
+						rs.getInt("DateEndDue"),
 						rs.getString("StartTimeZone"),
-						rs.getString("Category")
+						rs.getString("Category"),
+						rs.getString("Location"),
+						rs.getString("Description")
 					);
 				Progress.updateProgress((float)currentEvent++/totalEvents);
 				icsExporter.addEvent(cE);

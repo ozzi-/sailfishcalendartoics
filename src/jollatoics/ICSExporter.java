@@ -13,6 +13,8 @@ import net.fortuna.ical4j.model.TimeZoneRegistry;
 import net.fortuna.ical4j.model.TimeZoneRegistryFactory;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.CalScale;
+import net.fortuna.ical4j.model.property.Description;
+import net.fortuna.ical4j.model.property.Location;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.model.property.Version;
@@ -43,36 +45,59 @@ public class ICSExporter {
 	}
 	
 	public void addEvent(CalendarEntry calendarEntry){
-		java.util.Calendar cal;
+		java.util.Calendar calStart;
+		java.util.Calendar calEnd;
 		TimeZone timeZone = null;
+		
 		if(!calendarEntry.getTimeZone().equals("")){
 			timeZone = registry.getTimeZone(calendarEntry.getTimeZone());
-			cal = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);			
+			calStart = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);		
+			calEnd = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);			
+
 		}else{
-			cal = java.util.Calendar.getInstance();		
+			calStart = java.util.Calendar.getInstance();
+			calEnd = java.util.Calendar.getInstance();		
 		}
 		
-		cal.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy"));
-		cal.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM"));
-		cal.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd"));
-		cal.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh"));
-		cal.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm"));
-		cal.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss"));
-
-		DateTime dt = new DateTime(cal.getTime());
-		if(!calendarEntry.getTimeZone().equals("")){
-			dt.setTimeZone(timeZone);
+		calStart.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy",false));
+		calStart.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM",false));
+		calStart.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd",false));
+		calStart.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh",false));
+		calStart.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm",false));
+		calStart.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss",false));
+		
+		calEnd.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy",true));
+		calEnd.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM",true));
+		calEnd.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd",true));
+		calEnd.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh",true));
+		calEnd.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm",true));
+		calEnd.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss",true));
+		
+		DateTime dtStart = new DateTime(calStart.getTime());
+		DateTime dtEnd = new DateTime(calEnd.getTime());
+		if(timeZone!=null){
+			dtStart.setTimeZone(timeZone);
+			dtEnd.setTimeZone(timeZone);
 		}
-		String additionalInfo= calendarEntry.getCategory().equals("")?"":"("+calendarEntry.getCategory()+")";
-		VEvent event = new VEvent(dt, calendarEntry.getName()+additionalInfo);
-		event.getProperties().add(uidGenerator.generateUid());
-		if(calendarEntry.getCategory().equals("BIRTHDAY")){
+		
+		VEvent event;
+		if(calendarEntry.isBirthday()){
+			event = new VEvent(dtStart, calendarEntry.getName()+"("+calendarEntry.getCategory()+")");
 			String rrule = "FREQ=YEARLY;";
 			try {
 				event.getProperties().add(new RRule(rrule));
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
+		}else{
+			event = new VEvent(dtStart, dtEnd, calendarEntry.getName());			
+		}
+		event.getProperties().add(uidGenerator.generateUid());
+		if(!calendarEntry.getLocation().equals("")){
+			event.getProperties().add(new Location(calendarEntry.getLocation()));			
+		}
+		if(!calendarEntry.getDescription().equals("")){
+			event.getProperties().add(new Description(calendarEntry.getDescription()));			
 		}
 		calendar.getComponents().add(event);
 	}
