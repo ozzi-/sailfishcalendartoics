@@ -5,8 +5,8 @@ import java.util.Date;
 
 public class CalendarEntry {
 
-	String name;
-	Date dateStart;
+	private String name;
+	private Date dateStart;
 
 	public CalendarEntry(String name, int dateStart) {
 		this.name = name;
