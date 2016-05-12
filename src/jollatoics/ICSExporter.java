@@ -3,6 +3,7 @@ package jollatoics;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.net.SocketException;
+import java.text.ParseException;
 
 import net.fortuna.ical4j.data.CalendarOutputter;
 import net.fortuna.ical4j.model.Calendar;
@@ -13,6 +14,7 @@ import net.fortuna.ical4j.model.TimeZoneRegistryFactory;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.CalScale;
 import net.fortuna.ical4j.model.property.ProdId;
+import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.util.UidGenerator;
 
@@ -56,12 +58,22 @@ public class ICSExporter {
 		cal.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh"));
 		cal.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm"));
 		cal.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss"));
+
 		DateTime dt = new DateTime(cal.getTime());
 		if(!calendarEntry.getTimeZone().equals("")){
 			dt.setTimeZone(timeZone);
 		}
-		VEvent event = new VEvent(dt, calendarEntry.getName());
+		String additionalInfo= calendarEntry.getCategory().equals("")?"":"("+calendarEntry.getCategory()+")";
+		VEvent event = new VEvent(dt, calendarEntry.getName()+additionalInfo);
 		event.getProperties().add(uidGenerator.generateUid());
+		if(calendarEntry.getCategory().equals("BIRTHDAY")){
+			String rrule = "FREQ=YEARLY;";
+			try {
+				event.getProperties().add(new RRule(rrule));
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 		calendar.getComponents().add(event);
 	}
 	

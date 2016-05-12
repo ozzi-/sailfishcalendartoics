@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 
 import net.fortuna.ical4j.data.ParserException;
 
@@ -33,37 +32,39 @@ public class jollatoics {
 		Connection db = SQLiteJDBC.open(dbLocation);
 		Statement stmt = null;
 		ResultSet rs = null;
-		ArrayList<CalendarEntry> calendarList = new ArrayList<CalendarEntry>();
-
+		Statement stmtTE = null;
+		ResultSet rsTE = null;
+		int currentEvent=0;
+		ICSExporter icsExporter = new ICSExporter(icsLocation);
+		
 		try {
+			stmtTE = db.createStatement();
+			rsTE = stmtTE.executeQuery("SELECT COUNT(*) FROM components;");
+			int totalEvents=(rsTE.getInt("COUNT(*)"));
+			System.out.println("Got "+totalEvents+"x events");
 			stmt = db.createStatement();
 			rs = stmt.executeQuery("SELECT * FROM components;");
+			
 			while (rs.next()) {
-				calendarList.add(
-						new CalendarEntry(
-								rs.getString("Summary"), 
-								rs.getInt("DateStart"),
-								rs.getString("StartTimeZone")
-							)
+				CalendarEntry cE= new CalendarEntry(
+						rs.getString("Summary"), 
+						rs.getInt("DateStart"),
+						rs.getString("StartTimeZone"),
+						rs.getString("Category")
 					);
+				Progress.updateProgress((float)currentEvent++/totalEvents);
+				icsExporter.addEvent(cE);
+
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			if (rs != null) {
-				rs.close();
-			}
-			if (stmt != null) {
-				stmt.close();
-			}
+			SQLiteJDBC.safeClose(rsTE);
+			SQLiteJDBC.safeClose(stmtTE);
+			SQLiteJDBC.safeClose(rs);
+			SQLiteJDBC.safeClose(stmt);
 		}
 
-		ICSExporter icsExporter = new ICSExporter(icsLocation);
-		
-		for (CalendarEntry calendarEntry : calendarList) {
-			icsExporter.addEvent(calendarEntry);
-			System.out.println(calendarEntry);
-		}
 		icsExporter.export();
 	}
 }

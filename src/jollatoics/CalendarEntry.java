@@ -1,18 +1,20 @@
 package jollatoics;
 
 import java.text.SimpleDateFormat;
-import java.util.Date; 
+import java.util.Date;
 
 public class CalendarEntry {
 
 	private String name;
 	private Date dateStart;
 	private String timeZone;
+	private String category;
 
-	public CalendarEntry(String name, int dateStart, String timeZone) {
+	public CalendarEntry(String name, int dateStart, String timeZone, String category) {
 		this.name = name;
 		this.dateStart = new Date((long) dateStart * 1000);
-		this.timeZone =timeZone;
+		this.timeZone = timeZone;
+		this.category = category;
 	}
 
 	public String getTimeZone() {
@@ -34,8 +36,8 @@ public class CalendarEntry {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	public int getDF(String dF){
+
+	public int getDF(String dF) {
 		return Integer.valueOf(new SimpleDateFormat(dF).format(this.getDateStart()));
 	}
 
@@ -49,6 +51,14 @@ public class CalendarEntry {
 
 	@Override
 	public String toString() {
-		return name + "@" +new SimpleDateFormat("dd-MM-yyyy hh:mm:ss").format(dateStart);
+		return name + "@" + new SimpleDateFormat("dd-MM-yyyy hh:mm:ss").format(dateStart);
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 }
