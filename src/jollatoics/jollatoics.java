@@ -30,7 +30,6 @@ public class jollatoics {
 		}
 		
 		
-
 		Connection db = SQLiteJDBC.open(dbLocation);
 		Statement stmt = null;
 		ResultSet rs = null;
