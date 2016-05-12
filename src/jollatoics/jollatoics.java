@@ -39,7 +39,13 @@ public class jollatoics {
 			stmt = db.createStatement();
 			rs = stmt.executeQuery("SELECT * FROM components;");
 			while (rs.next()) {
-				calendarList.add(new CalendarEntry(rs.getString("Summary"), rs.getInt("DateStart")));
+				calendarList.add(
+						new CalendarEntry(
+								rs.getString("Summary"), 
+								rs.getInt("DateStart"),
+								rs.getString("StartTimeZone")
+							)
+					);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -55,7 +61,7 @@ public class jollatoics {
 		ICSExporter icsExporter = new ICSExporter(icsLocation);
 		
 		for (CalendarEntry calendarEntry : calendarList) {
-			icsExporter.addEvent(calendarEntry.getName());
+			icsExporter.addEvent(calendarEntry);
 			System.out.println(calendarEntry);
 		}
 		icsExporter.export();

@@ -18,10 +18,10 @@ import net.fortuna.ical4j.util.UidGenerator;
 
 public class ICSExporter {
 	
-	private TimeZone timezone;
 	private Calendar calendar;
 	private UidGenerator uidGenerator;
 	private String icsLocation;
+	private TimeZoneRegistry registry;
 	
 	public ICSExporter(String icsLocationp) {
 		icsLocation=icsLocationp;
@@ -30,8 +30,8 @@ public class ICSExporter {
 		calendar.getProperties().add(Version.VERSION_2_0);
 		calendar.getProperties().add(CalScale.GREGORIAN);
 
-		TimeZoneRegistry registry = TimeZoneRegistryFactory.getInstance().createRegistry();
-		timezone = registry.getTimeZone("Australia/Melbourne"); // TODO timezone!?
+		registry = TimeZoneRegistryFactory.getInstance().createRegistry();
+
 		try {
 			uidGenerator = new UidGenerator("1");
 		} catch (SocketException e) {
@@ -40,17 +40,27 @@ public class ICSExporter {
 		}
 	}
 	
-	public void addEvent(String eventName){
-		java.util.Calendar cal = java.util.Calendar.getInstance(timezone);
-		cal.set(java.util.Calendar.YEAR, 2005);
-		cal.set(java.util.Calendar.MONTH, java.util.Calendar.NOVEMBER);
-		cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
-		cal.set(java.util.Calendar.HOUR_OF_DAY, 15);
-		cal.clear(java.util.Calendar.MINUTE);
-		cal.clear(java.util.Calendar.SECOND);
+	public void addEvent(CalendarEntry calendarEntry){
+		java.util.Calendar cal;
+		TimeZone timeZone = null;
+		if(!calendarEntry.getTimeZone().equals("")){
+			timeZone = registry.getTimeZone(calendarEntry.getTimeZone());
+			cal = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);			
+		}else{
+			cal = java.util.Calendar.getInstance();		
+		}
+		
+		cal.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy"));
+		cal.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM"));
+		cal.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd"));
+		cal.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh"));
+		cal.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm"));
+		cal.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss"));
 		DateTime dt = new DateTime(cal.getTime());
-		dt.setTimeZone(timezone);
-		VEvent event = new VEvent(dt, eventName);
+		if(!calendarEntry.getTimeZone().equals("")){
+			dt.setTimeZone(timeZone);
+		}
+		VEvent event = new VEvent(dt, calendarEntry.getName());
 		event.getProperties().add(uidGenerator.generateUid());
 		calendar.getComponents().add(event);
 	}
