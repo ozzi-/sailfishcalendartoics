@@ -1,4 +1,4 @@
-# sailfishcalendartoics
+# SFCALTOICS
 Export SailfishOS calendar (sqlite database) to one ICS file!
 
 1. Copy home/nemo/.local/share/system/privileged/Calendar/mkcal to your computer
