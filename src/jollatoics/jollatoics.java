@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 
 import net.fortuna.ical4j.data.ParserException;
 
@@ -37,19 +38,22 @@ public class jollatoics {
 		ResultSet rsTE = null;
 		int currentEvent=0;
 		ICSExporter icsExporter = new ICSExporter(icsLocation);
+		HashSet<CalendarEntry> ceHashSet = new HashSet<CalendarEntry>();
+		int totalEvents=0;
 		
 		try {
 			stmtTE = db.createStatement();
 			rsTE = stmtTE.executeQuery("SELECT COUNT(*) FROM components;");
-			int totalEvents=(rsTE.getInt("COUNT(*)"));
-			System.out.println("Got "+totalEvents+"x events");
+			totalEvents=(rsTE.getInt("COUNT(*)"));
+			System.out.println("Found "+totalEvents+"x entries");
 			stmt = db.createStatement();
 			rs = stmt.executeQuery("SELECT * FROM components;");
 			
 			while (rs.next()) {
 				CalendarEntry cE= new CalendarEntry(
 						rs.getString("Summary"),
-						// TODO do we need the local or non local column? ics4j should calculate it ,,
+						rs.getInt("DateStartLocal"), 
+						rs.getInt("DateEndDueLocal"),
 						rs.getInt("DateStart"), 
 						rs.getInt("DateEndDue"),
 						rs.getString("StartTimeZone"),
@@ -57,9 +61,12 @@ public class jollatoics {
 						rs.getString("Location"),
 						rs.getString("Description")
 					);
+				
+				boolean noDuplicate = ceHashSet.add(cE);
 				Progress.updateProgress((float)currentEvent++/totalEvents);
-				icsExporter.addEvent(cE);
-
+				if(noDuplicate){
+					icsExporter.addEvent(cE);					
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -69,7 +76,8 @@ public class jollatoics {
 			SQLiteJDBC.safeClose(rs);
 			SQLiteJDBC.safeClose(stmt);
 		}
-
+		System.out.println();
+		System.out.println("Exported: "+ceHashSet.size()+" / "+totalEvents+" (removed "+(totalEvents-ceHashSet.size())+"x duplicates)");
 		icsExporter.export();
 	}
 }

@@ -9,8 +9,6 @@ import net.fortuna.ical4j.data.CalendarOutputter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.TimeZone;
-import net.fortuna.ical4j.model.TimeZoneRegistry;
-import net.fortuna.ical4j.model.TimeZoneRegistryFactory;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.CalScale;
 import net.fortuna.ical4j.model.property.Description;
@@ -25,16 +23,14 @@ public class ICSExporter {
 	private Calendar calendar;
 	private UidGenerator uidGenerator;
 	private String icsLocation;
-	private TimeZoneRegistry registry;
-	
+
 	public ICSExporter(String icsLocationp) {
 		icsLocation=icsLocationp;
 		calendar = new Calendar();
 		calendar.getProperties().add(new ProdId("-//https://github.com/ozzi-/sailfishcalendartoics//iCal4j 1.0//EN"));
 		calendar.getProperties().add(Version.VERSION_2_0);
 		calendar.getProperties().add(CalScale.GREGORIAN);
-
-		registry = TimeZoneRegistryFactory.getInstance().createRegistry();
+		
 
 		try {
 			uidGenerator = new UidGenerator("1");
@@ -47,34 +43,28 @@ public class ICSExporter {
 	public void addEvent(CalendarEntry calendarEntry){
 		java.util.Calendar calStart;
 		java.util.Calendar calEnd;
-		TimeZone timeZone = null;
+		TimeZone timeZone = calendarEntry.getTimeZone();
 		
-		if(!calendarEntry.getTimeZone().equals("")){
-			timeZone = registry.getTimeZone(calendarEntry.getTimeZone());
-			calStart = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);		
-			calEnd = timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);			
-
-		}else{
-			calStart = java.util.Calendar.getInstance();
-			calEnd = java.util.Calendar.getInstance();		
-		}
+		calStart	= timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);		
+		calEnd		= timeZone==null?java.util.Calendar.getInstance():java.util.Calendar.getInstance(timeZone);			
 		
-		calStart.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy",false));
-		calStart.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM",false));
-		calStart.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd",false));
-		calStart.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh",false));
-		calStart.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm",false));
-		calStart.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss",false));
+		calStart.set(java.util.Calendar.YEAR, calendarEntry.getDF4J("yyyy",false));
+		calStart.set(java.util.Calendar.MONTH, calendarEntry.getDF4J("MM",false)); 
+		calStart.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF4J("dd",false));
+		calStart.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF4J("HH",false));
+		calStart.set(java.util.Calendar.MINUTE, calendarEntry.getDF4J("mm",false));
+		calStart.set(java.util.Calendar.SECOND, calendarEntry.getDF4J("ss",false));
 		
-		calEnd.set(java.util.Calendar.YEAR, calendarEntry.getDF("yyyy",true));
-		calEnd.set(java.util.Calendar.MONTH, calendarEntry.getDF("MM",true));
-		calEnd.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF("dd",true));
-		calEnd.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF("hh",true));
-		calEnd.set(java.util.Calendar.MINUTE, calendarEntry.getDF("mm",true));
-		calEnd.set(java.util.Calendar.SECOND, calendarEntry.getDF("ss",true));
+		calEnd.set(java.util.Calendar.YEAR, calendarEntry.getDF4J("yyyy",true));
+		calEnd.set(java.util.Calendar.MONTH, calendarEntry.getDF4J("MM",true)); 
+		calEnd.set(java.util.Calendar.DAY_OF_MONTH, calendarEntry.getDF4J("dd",true));
+		calEnd.set(java.util.Calendar.HOUR_OF_DAY, calendarEntry.getDF4J("HH",true));
+		calEnd.set(java.util.Calendar.MINUTE, calendarEntry.getDF4J("mm",true));
+		calEnd.set(java.util.Calendar.SECOND, calendarEntry.getDF4J("ss",true));
 		
 		DateTime dtStart = new DateTime(calStart.getTime());
 		DateTime dtEnd = new DateTime(calEnd.getTime());
+	
 		if(timeZone!=null){
 			dtStart.setTimeZone(timeZone);
 			dtEnd.setTimeZone(timeZone);
@@ -92,6 +82,7 @@ public class ICSExporter {
 		}else{
 			event = new VEvent(dtStart, dtEnd, calendarEntry.getName());			
 		}
+
 		event.getProperties().add(uidGenerator.generateUid());
 		if(!calendarEntry.getLocation().equals("")){
 			event.getProperties().add(new Location(calendarEntry.getLocation()));			
